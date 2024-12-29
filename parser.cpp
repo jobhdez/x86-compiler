@@ -1,304 +1,217 @@
-#include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
+#include "parser.h"
 
-using namespace std;
+NumberExpression::NumberExpression(int value) : value(value) {}
+string NumberExpression::toString() const { return to_string(value); }
+int NumberExpression::get_value() { return value; }
 
-class Expression {
-public:
-  virtual ~Expression() = default;
-  virtual string toString() const = 0;
-};
+VariableExpression::VariableExpression(const string &name) : name(name) {}
+string VariableExpression::toString() const { return name; }
+string VariableExpression::get_name() { return name; }
 
-class NumberExpression : public Expression {
-  int value;
-
-public:
-  NumberExpression(int value) : value(value) {}
-  ~NumberExpression() override = default;
-  string toString() const override { return to_string(value); }
-  int get_value() { return value; }
-};
-
-class VariableExpression : public Expression {
-  string name;
-
-public:
-  VariableExpression(const string &name) : name(name) {}
-  ~VariableExpression() override = default;
-  string toString() const override { return name; }
-  string get_name() { return name; }
-};
-
-class AdditionExpression : public Expression {
-  Expression *left;
-  Expression *right;
-
-public:
-  AdditionExpression(Expression *left, Expression *right)
-      : left(left), right(right) {}
-  ~AdditionExpression() override {
+AdditionExpression::AdditionExpression(Expression *left, Expression *right)
+    : left(left), right(right) {}
+AdditionExpression::~AdditionExpression() {
     delete left;
     delete right;
-  }
-  string toString() const override {
+}
+string AdditionExpression::toString() const {
     return "(+ " + left->toString() + " " + right->toString() + ")";
-  }
+}
+Expression *AdditionExpression::get_left() { return left; }
+Expression *AdditionExpression::get_right() { return right; }
 
-  Expression *get_left() { return left; }
-  Expression *get_right() { return right; }
-};
-
-class LessExpression : public Expression {
-  Expression *left;
-  Expression *right;
-
-public:
-  LessExpression(Expression *left, Expression *right)
-      : left(left), right(right) {}
-  ~LessExpression() override {
+LessExpression::LessExpression(Expression *left, Expression *right)
+    : left(left), right(right) {}
+LessExpression::~LessExpression() {
     delete left;
     delete right;
-  }
-  string toString() const override {
+}
+string LessExpression::toString() const {
     return "(< " + left->toString() + " " + right->toString() + ")";
-  }
+}
+Expression *LessExpression::get_left() { return left; }
+Expression *LessExpression::get_right() { return right; }
 
-  Expression *get_left() { return left; }
-  Expression *get_right() { return right; }
-};
-
-class LetExpression : public Expression {
-  string variable;
-  Expression *value;
-  Expression *body;
-
-public:
-  LetExpression(const string &variable, Expression *value, Expression *body)
-      : variable(variable), value(value), body(body) {}
-  ~LetExpression() override {
+// LetExpression
+LetExpression::LetExpression(const string &variable, Expression *value, Expression *body)
+    : variable(variable), value(value), body(body) {}
+LetExpression::~LetExpression() {
     delete value;
     delete body;
-  }
-  string toString() const override {
-    return "(let ((" + variable + " " + value->toString() + ")) " +
-           body->toString() + ")";
-  }
+}
+string LetExpression::toString() const {
+    return "(let ((" + variable + " " + value->toString() + ")) " + body->toString() + ")";
+}
+string LetExpression::get_variable() { return variable; }
+Expression *LetExpression::get_value() { return value; }
+Expression *LetExpression::get_body() { return body; }
 
-  string get_variable() { return variable; }
-  Expression *get_value() { return value; }
-  Expression *get_body() { return body; }
-};
 
-class SetExpression : public Expression {
-  string variable;
-  Expression *value;
-
-public:
-  SetExpression(const string &variable, Expression *value)
-      : variable(variable), value(value) {}
-  ~SetExpression() override { delete value; }
-  string toString() const override {
+SetExpression::SetExpression(const string &variable, Expression *value)
+    : variable(variable), value(value) {}
+SetExpression::~SetExpression() { delete value; }
+string SetExpression::toString() const {
     return "(set " + variable + " " + value->toString() + ")";
-  }
-  Expression *get_value() { return value; }
-  string get_variable() { return variable; }
-};
+}
+Expression *SetExpression::get_value() { return value; }
+string SetExpression::get_variable() { return variable; }
 
-class IfExpression : public Expression {
-  Expression *cnd;
-  Expression *thn;
-  Expression *els;
-
-public:
-  IfExpression(Expression *cnd, Expression *thn, Expression *els)
-      : cnd(cnd), thn(thn), els(els) {}
-  ~IfExpression() override {
+IfExpression::IfExpression(Expression *cnd, Expression *thn, Expression *els)
+    : cnd(cnd), thn(thn), els(els) {}
+IfExpression::~IfExpression() {
     delete cnd;
     delete thn;
     delete els;
-  }
-  string toString() const override {
-    return "(if " + cnd->toString() + " " + thn->toString() + " " +
-           els->toString() + ")";
-  }
+}
+string IfExpression::toString() const {
+    return "(if " + cnd->toString() + " " + thn->toString() + " " + els->toString() + ")";
+}
+Expression *IfExpression::get_cnd() { return cnd; }
+Expression *IfExpression::get_thn() { return thn; }
+Expression *IfExpression::get_els() { return els; }
 
-  Expression *get_cnd() { return cnd; }
-  Expression *get_thn() { return thn; }
-  Expression *get_els() { return els; }
-};
 
-class WhileExpression : public Expression {
-  Expression *cnd;
-  Expression *body;
-
-public:
-  WhileExpression(Expression *cnd, Expression *body) : cnd(cnd), body(body) {}
-  ~WhileExpression() override {
+WhileExpression::WhileExpression(Expression *cnd, Expression *body)
+    : cnd(cnd), body(body) {}
+WhileExpression::~WhileExpression() {
     delete cnd;
     delete body;
-  }
-  string toString() const override {
+}
+string WhileExpression::toString() const {
     return "(while " + cnd->toString() + " " + body->toString() + ")";
-  }
+}
+Expression *WhileExpression::get_cnd() { return cnd; }
+Expression *WhileExpression::get_body() { return body; }
 
-  Expression *get_cnd() { return cnd; }
-  Expression *get_body() { return body; }
-};
 
-class BeginExpression : public Expression {
-  vector<Expression *> *expressions;
-
-public:
-  BeginExpression(vector<Expression *> *expressions)
-      : expressions(expressions) {}
-  BeginExpression() : expressions(new vector<Expression *>{}) {}
-
-  ~BeginExpression() override {
+BeginExpression::BeginExpression(vector<Expression *> *expressions)
+    : expressions(expressions) {}
+BeginExpression::BeginExpression() : expressions(new vector<Expression *>{}) {}
+BeginExpression::~BeginExpression() {
     for (Expression *expr : *expressions) {
-      delete expr;
+        delete expr;
     }
     delete expressions;
-  }
-
-  void push_exp(Expression *exp) { expressions->push_back(exp); }
-
-  string toString() const override {
+}
+void BeginExpression::push_exp(Expression *exp) { expressions->push_back(exp); }
+string BeginExpression::toString() const {
     string result = "(begin";
     for (const auto &expr : *expressions) {
-      result += " " + expr->toString();
+        result += " " + expr->toString();
     }
     result += ")";
     return result;
-  }
+}
+vector<Expression *> *BeginExpression::get_expressions() { return expressions; }
 
-  vector<Expression *> *get_expressions() { return expressions; }
-};
 
-class Parser {
-public:
-  static Expression *parse(const string &program) {
-    vector<string> tokens = tokenize(program);
-    size_t index = 0;
-    return parseExpression(tokens, index);
-  }
-
-private:
-  static vector<string> tokenize(const string &program) {
+vector<string> Parser::tokenize(const string &program) {
     vector<string> tokens;
     string currentToken;
     for (char ch : program) {
-      switch (ch) {
-      case '(':
-      case ')':
-      case ' ':
-        if (!currentToken.empty()) {
-          tokens.push_back(currentToken);
-          currentToken.clear();
+        switch (ch) {
+        case '(':
+        case ')':
+        case ' ':
+            if (!currentToken.empty()) {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            if (ch != ' ')
+                tokens.push_back(string(1, ch));
+            break;
+        default:
+            currentToken += ch;
+            break;
         }
-        if (ch != ' ')
-          tokens.push_back(string(1, ch));
-        break;
-      default:
-        currentToken += ch;
-        break;
-      }
     }
     if (!currentToken.empty()) {
-      tokens.push_back(currentToken);
+        tokens.push_back(currentToken);
     }
     return tokens;
-  }
+}
 
-  static Expression *parseExpression(const vector<string> &tokens,
-                                     size_t &index) {
+Expression *Parser::parse(const string &program) {
+    vector<string> tokens = tokenize(program);
+    size_t index = 0;
+    return parseExpression(tokens, index);
+}
+
+Expression *Parser::parseExpression(const vector<string> &tokens, size_t &index) {
     const string &token = tokens[index];
 
     if (token == "(") {
-      ++index;
-      const string &nextToken = tokens[index];
+        ++index;
+        const string &nextToken = tokens[index];
 
-      if (nextToken == "+") {
-        ++index;
-        Expression *left = parseExpression(tokens, index);
-        ++index;
-        Expression *right = parseExpression(tokens, index);
-        ++index; // Skip closing ')'
-        return new AdditionExpression(left, right);
-      } else if (nextToken == "<") {
-        ++index;
-        Expression *left = parseExpression(tokens, index);
-        ++index;
-        Expression *right = parseExpression(tokens, index);
-        ++index; // Skip closing ')'
-        return new LessExpression(left, right);
-      } else if (nextToken == "if") {
-        ++index; // Skip "if"
-        Expression *cnd = parseExpression(tokens, index);
-        ++index;
-        Expression *thn = parseExpression(tokens, index);
-        ++index;
-        Expression *els = parseExpression(tokens, index);
-        ++index; // Skip closing ')'
-        return new IfExpression(cnd, thn, els);
-      } else if (nextToken == "begin") {
-        ++index;
-        BeginExpression *bgn = new BeginExpression();
-        while (tokens[index] != ")") {
-          Expression *exp = parseExpression(tokens, index);
-          bgn->push_exp(exp);
-          ++index;
+        if (nextToken == "+") {
+            ++index;
+            Expression *left = parseExpression(tokens, index);
+            ++index;
+            Expression *right = parseExpression(tokens, index);
+            ++index; // Skip closing ')'
+            return new AdditionExpression(left, right);
+        } else if (nextToken == "<") {
+            ++index;
+            Expression *left = parseExpression(tokens, index);
+            ++index;
+            Expression *right = parseExpression(tokens, index);
+            ++index; // Skip closing ')'
+            return new LessExpression(left, right);
+        } else if (nextToken == "if") {
+            ++index; // Skip "if"
+            Expression *cnd = parseExpression(tokens, index);
+            ++index;
+            Expression *thn = parseExpression(tokens, index);
+            ++index;
+            Expression *els = parseExpression(tokens, index);
+            ++index; // Skip closing ')'
+            return new IfExpression(cnd, thn, els);
+        } else if (nextToken == "begin") {
+            ++index;
+            BeginExpression *bgn = new BeginExpression();
+            while (tokens[index] != ")") {
+                Expression *exp = parseExpression(tokens, index);
+                bgn->push_exp(exp);
+                ++index;
+            }
+            ++index; // Skip closing ')'
+            return bgn;
+        } else if (nextToken == "set") {
+            ++index;
+            string variable = tokens[index++];
+            Expression *value = parseExpression(tokens, index);
+            ++index;
+            return new SetExpression(variable, value);
+        } else if (nextToken == "let") {
+            ++index; // Skip "let"
+            ++index; // Skip first "("
+            ++index;
+            string variable = tokens[index++];
+            Expression *value = parseExpression(tokens, index);
+            ++index; // Skip ")"
+            ++index;
+            ++index;
+            Expression *body = parseExpression(tokens, index);
+            ++index; // Skip closing ')'
+            return new LetExpression(variable, value, body);
+        } else if (nextToken == "while") {
+            ++index;
+            Expression *cnd = parseExpression(tokens, index);
+            ++index;
+            Expression *body = parseExpression(tokens, index);
+            ++index; // Skip closing ')'
+            return new WhileExpression(cnd, body);
         }
-        ++index; // Skip closing ')'
-        return bgn;
-      } else if (nextToken == "set") {
-        ++index;
-        string variable = tokens[index++];
-        Expression *value = parseExpression(tokens, index);
-        ++index;
-        return new SetExpression(variable, value);
-      } else if (nextToken == "let") {
-        ++index; // Skip "let"
-        ++index; // Skip first "("
-        ++index;
-        string variable = tokens[index++];
-        Expression *value = parseExpression(tokens, index);
-        ++index; // Skip ")"
-        ++index;
-        ++index;
-        Expression *body = parseExpression(tokens, index);
-        ++index; // Skip closing ')'
-        return new LetExpression(variable, value, body);
-      } else if (nextToken == "while") {
-        ++index;
-        Expression *cnd = parseExpression(tokens, index);
-        ++index;
-        Expression *body = parseExpression(tokens, index);
-        ++index; // Skip closing ')'
-        return new WhileExpression(cnd, body);
-      }
     } else if (isNumber(token)) {
-      return new NumberExpression(stoi(token));
+        return new NumberExpression(stoi(token));
     } else {
-      return new VariableExpression(token);
+        return new VariableExpression(token);
     }
 
     return nullptr;
-  }
-
-  static bool isNumber(const string &token) {
-    return !token.empty() && all_of(token.begin(), token.end(), ::isdigit);
-  }
-};
-/*
-int main() {
-  string program = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin
-(set sum (+ sum 2)) (set i (+ i 1)))) sum)))"; Expression *expression =
-Parser::parse(program); if (expression) { cout << expression->toString() <<
-endl; delete expression; } else { cout << "Parsing failed." << endl;
-  }
-  return 0;
 }
-*/
+
+bool Parser::isNumber(const string &token) {
+    return !token.empty() && all_of(token.begin(), token.end(), ::isdigit);
+}

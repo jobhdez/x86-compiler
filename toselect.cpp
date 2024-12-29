@@ -1,88 +1,71 @@
-#include "toanf.cpp"
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include "parser.h"
+#include "toanf.h"
+#include "toselect.h"
 
-using namespace std;
+Instructions::Instructions(std::vector<std::vector<std::string>> *instructions)
+    : instructions(instructions) {}
 
-class Instructions {
-  vector<vector<string>> *instructions;
+std::vector<std::vector<std::string>> *Instructions::get_instructions() {
+  return instructions;
+}
 
-public:
-  Instructions(vector<vector<string>> *instructions)
-      : instructions(instructions) {}
-
-  vector<vector<string>> *get_instructions() { return instructions; }
-
-  string to_assembly() {
-    string program;
-    for (auto &instruction : *instructions) {
-
-      for (const auto &line : instruction) {
-        program += line;
-      }
+std::string Instructions::to_assembly() {
+  std::string program;
+  for (auto &instruction : *instructions) {
+    for (const auto &line : instruction) {
+      program += line;
     }
-    return program;
   }
-};
+  return program;
+}
 
-class InstructionSelector {
-public:
-  static Instructions *to_select(Expression *anf) {
-    size_t counter = 0;
-    unordered_map<string, string> stack;
-    auto *main_instructions = anf_to_select(anf, counter, stack);
-    size_t stack_;
-    if ((counter % 16) == 0) {
-      stack_ = counter;
-    } else {
-      stack_ = counter += 8;
-    }
-    vector<vector<string>> *prelude_instructions = new vector<vector<string>>();
-    vector<string> in_ = {"\t.globl ", "main\n"};
-    vector<string> in2_ = {"main:\n"};
-    vector<string> in3_ = {"\tpushq ", "%rbp\n"};
-    vector<string> in4_ = {"\tmovq ", "%rsp, ", "%rbp\n"};
-    vector<string> in5_ = {"\tsubq ", "$" + to_string(stack_) + ", ", "%rsp\n"};
-
-    prelude_instructions->push_back(in_);
-    prelude_instructions->push_back(in2_);
-    prelude_instructions->push_back(in3_);
-    prelude_instructions->push_back(in4_);
-    prelude_instructions->push_back(in5_);
-
-    vector<vector<string>> *conclusion_instructions =
-        new vector<vector<string>>();
-    vector<string> in__ = {"\nconclusion:\n\n"};
-    vector<string> in2__ = {"\taddq ", "$" + to_string(stack_) + ", ",
-                            "%rsp\n"};
-    vector<string> in3__ = {"\tpopq ", "%rbp\n"};
-    vector<string> in4__ = {"\tretq"};
-    conclusion_instructions->push_back(in__);
-    conclusion_instructions->push_back(in2__);
-    conclusion_instructions->push_back(in3__);
-    conclusion_instructions->push_back(in4__);
-
-    prelude_instructions->insert(prelude_instructions->end(),
-                                 main_instructions->begin(),
-                                 main_instructions->end());
-    prelude_instructions->insert(prelude_instructions->end(),
-                                 conclusion_instructions->begin(),
-                                 conclusion_instructions->end());
-    return new Instructions(prelude_instructions);
+Instructions *InstructionSelector::to_select(Expression *anf) {
+  size_t counter = 0;
+  std::unordered_map<std::string, std::string> stack;
+  auto *main_instructions = anf_to_select(anf, counter, stack);
+  size_t stack_;
+  if ((counter % 16) == 0) {
+    stack_ = counter;
+  } else {
+    stack_ = counter += 8;
   }
+  auto *prelude_instructions = new std::vector<std::vector<std::string>>();
+  std::vector<std::string> in_ = {"\t.globl ", "main\n"};
+  std::vector<std::string> in2_ = {"main:\n"};
+  std::vector<std::string> in3_ = {"\tpushq ", "%rbp\n"};
+  std::vector<std::string> in4_ = {"\tmovq ", "%rsp, ", "%rbp\n"};
+  std::vector<std::string> in5_ = {"\tsubq ", "$" + std::to_string(stack_) + ", ", "%rsp\n"};
 
-private:
-  static vector<vector<string>> *
-  anf_to_select(Expression *anf, size_t &counter,
-                unordered_map<string, string> &stack) {
+  prelude_instructions->push_back(in_);
+  prelude_instructions->push_back(in2_);
+  prelude_instructions->push_back(in3_);
+  prelude_instructions->push_back(in4_);
+  prelude_instructions->push_back(in5_);
 
-    vector<vector<string>> instructions;
+  auto *conclusion_instructions = new std::vector<std::vector<std::string>>();
+  std::vector<std::string> in__ = {"\nconclusion:\n\n"};
+  std::vector<std::string> in2__ = {"\taddq ", "$" + std::to_string(stack_) + ", ", "%rsp\n"};
+  std::vector<std::string> in3__ = {"\tpopq ", "%rbp\n"};
+  std::vector<std::string> in4__ = {"\tretq"};
+  conclusion_instructions->push_back(in__);
+  conclusion_instructions->push_back(in2__);
+  conclusion_instructions->push_back(in3__);
+  conclusion_instructions->push_back(in4__);
 
-    if (LetExpression *anf_let = dynamic_cast<LetExpression *>(anf)) {
+  prelude_instructions->insert(prelude_instructions->end(),
+                               main_instructions->begin(),
+                               main_instructions->end());
+  prelude_instructions->insert(prelude_instructions->end(),
+                               conclusion_instructions->begin(),
+                               conclusion_instructions->end());
+  return new Instructions(prelude_instructions);
+}
+
+std::vector<std::vector<std::string>> *
+InstructionSelector::anf_to_select(Expression *anf, size_t &counter,
+                                   std::unordered_map<std::string, std::string> &stack) {
+  std::vector<std::vector<std::string>> instructions;
+  if (LetExpression *anf_let = dynamic_cast<LetExpression *>(anf)) {
       string let_var = anf_let->get_variable();
 
       if (stack.find(let_var) == stack.end()) {
@@ -256,29 +239,8 @@ private:
 
       vector<string> print = {"\tcallq ", "print_int\n"};
       instructions.push_back(print);
-    }
-
-    vector<vector<string>> *instructs =
-        new vector<vector<string>>(instructions);
-
-    return instructs;
   }
-};
-
-int main() {
-  string input = "(let ((x 0)) (let ((y 8)) (if (< y 2) (if (< x 3) 1 2) 3)))";
-  //  string input = "(let ((x 3)) (begin (while (< x 5) (set x (+ x 1))) x))";
-  // string input = "(let ((x 3)) (set x (+ x 1)))";
-  /// string input = "(let ((x 3)) (begin x x))";
-  //  string input = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5)
-  //  (begin(set sum (+ sum 3)) (set i (+ i 1)))) sum)))";
-  Expression *ast = Parser::parse(input);
-  Expression *anf = ToAnf::to_anf(ast);
-  cout << ast->toString() << endl;
-  cout << anf->toString() << endl;
-  Instructions *ins = InstructionSelector::to_select(anf);
-  cout << "hello" << endl;
-  string program = ins->to_assembly();
-  cout << "hello" << endl;
-  cout << program << endl;
+    
+  auto *instructs = new std::vector<std::vector<std::string>>(instructions);
+  return instructs;
 }
