@@ -32,7 +32,6 @@ string LessExpression::toString() const {
 Expression *LessExpression::get_left() { return left; }
 Expression *LessExpression::get_right() { return right; }
 
-// LetExpression
 LetExpression::LetExpression(const string &variable, Expression *value, Expression *body)
     : variable(variable), value(value), body(body) {}
 LetExpression::~LetExpression() {
