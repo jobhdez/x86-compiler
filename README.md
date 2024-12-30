@@ -1,7 +1,7 @@
 ### Running the code
 
 ```bash
-$ clang++ toselect.cpp
+$ clang++ -std=c++11 main.cpp
 ```
 #### Example 1
 ```
