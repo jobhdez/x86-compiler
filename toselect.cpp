@@ -189,7 +189,7 @@ InstructionSelector::anf_to_select(Expression *anf, size_t &counter,
             instructions.push_back(add_);
           } else if (VariableExpression *r_var =
                          dynamic_cast<VariableExpression *>(right_exp)) {
-            vector<string> mov = {"\tmovq", stack[r_var->get_name()], "%rax\n"};
+            vector<string> mov = {"\tmovq ", stack[r_var->get_name()], ", %rax\n"};
             vector<string> add = {"\taddq ", "%rax, ", stack[var] + "\n"};
             instructions.push_back(mov);
             instructions.push_back(add);
@@ -202,9 +202,10 @@ InstructionSelector::anf_to_select(Expression *anf, size_t &counter,
       for (int i = 0; i < exps->size(); i++) {
         auto in = anf_to_select(exps->at(i), counter, stack);
         for (int j = 0; j < in->size(); j++) {
-          instructions.push_back(in->at(i));
+          instructions.push_back(in->at(j));
         }
       }
+      
     } else if (WhileExpression *while_expr =
                    dynamic_cast<WhileExpression *>(anf)) {
       Expression *cnd = while_expr->get_cnd();
