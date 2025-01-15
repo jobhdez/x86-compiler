@@ -5,8 +5,9 @@
 int main() {
   //std::string input = "(let ((x 0)) (let ((y 8)) (if (< y 2) (if (< x 3) 1 2) 3)))";
   //  std::string input = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum 1)) (set i (+ i 1)))) sum)))";
-  //std::string input = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum i)) (set i (+ i 1)))) sum)))";
-  std::string input = "(let ((x 0)) (if (< x 3) 2 4))";
+  std::string input = "(let ((sum 0)) (let ((i 0)) (begin (while (< i 5) (begin (set sum (+ sum i)) (set i (+ i 1)))) sum)))";
+  //std::string input = "(let ((x 0)) (if (< x 3) 2 4))";
+  //std::string input = "(begin 1 2 3 4)";
   Expression *ast = Parser::parse(input);
   Expression *anf = ToAnf::to_anf(ast);
   std::cout << ast->toString() << std::endl;
