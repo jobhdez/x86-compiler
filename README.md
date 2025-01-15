@@ -1,7 +1,8 @@
 ### Running the code
 
 ```bash
-$ clang++ -std=c++11 main.cpp
+$ make main
+$ make test
 ```
 #### Example 1
 ```
