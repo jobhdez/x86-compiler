@@ -96,7 +96,7 @@ InstructionSelector::anf_to_select(Expression *anf, size_t &counter,
           if (stack.find(var) != stack.end()) {
             string stack_location_ = stack[var];
             string immediate_ = to_string(num_expr->get_value());
-            vector<string> cmp = {"\tcmpq ", immediate_ + ", ",
+            vector<string> cmp = {"\tcmpq ", "$"+immediate_ + ", ",
                                   stack_location_ + "\n"};
             vector<string> setl = {"\tsetl ", "%al\n"};
             vector<string> movz = {"\tmovzbq ", "%al, ", "%rsi\n"};
@@ -142,13 +142,13 @@ InstructionSelector::anf_to_select(Expression *anf, size_t &counter,
       instructions.push_back(je);
       instructions.push_back(jmp);
       vector<string> label = {"\n" + block + ":\n\n"};
-      ;
+      
       instructions.push_back(label);
       auto thn_instructions = anf_to_select(if_expr->get_thn(), counter, stack);
       instructions.insert(instructions.end(), thn_instructions->begin(),
                           thn_instructions->end());
       vector<string> conclusion = {"\tjmp ", "conclusion\n"};
-      instructions.push_back(label);
+      instructions.push_back(conclusion);
       vector<string> label2 = {"\n" + block2 + ":\n\n"};
       instructions.push_back(label2);
       auto els_instructions = anf_to_select(if_expr->get_els(), counter, stack);
