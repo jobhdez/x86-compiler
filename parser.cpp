@@ -174,7 +174,8 @@ Expression *Parser::parseExpression(const vector<string> &tokens, size_t &index)
                 bgn->push_exp(exp);
                 ++index;
             }
-            ++index; // Skip closing ')'
+	    
+	   
             return bgn;
         } else if (nextToken == "set") {
             ++index;
@@ -183,23 +184,23 @@ Expression *Parser::parseExpression(const vector<string> &tokens, size_t &index)
             ++index;
             return new SetExpression(variable, value);
         } else if (nextToken == "let") {
-            ++index; // Skip "let"
-            ++index; // Skip first "("
+            ++index; 
+            ++index; 
             ++index;
             string variable = tokens[index++];
             Expression *value = parseExpression(tokens, index);
-            ++index; // Skip ")"
+            ++index; 
             ++index;
-            ++index;
+	    ++index;
             Expression *body = parseExpression(tokens, index);
-            ++index; // Skip closing ')'
+            ++index; 
             return new LetExpression(variable, value, body);
         } else if (nextToken == "while") {
             ++index;
             Expression *cnd = parseExpression(tokens, index);
             ++index;
             Expression *body = parseExpression(tokens, index);
-            ++index; // Skip closing ')'
+            ++index;
             return new WhileExpression(cnd, body);
         }
     } else if (isNumber(token)) {
@@ -214,3 +215,4 @@ Expression *Parser::parseExpression(const vector<string> &tokens, size_t &index)
 bool Parser::isNumber(const string &token) {
     return !token.empty() && all_of(token.begin(), token.end(), ::isdigit);
 }
+
